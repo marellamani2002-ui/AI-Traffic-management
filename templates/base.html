@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Traffic.AI - Smart Traffic Management{% endblock %}</title>
+    
+    <!-- Dashboard Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300f0ff'><circle cx='12' cy='12' r='10'/></svg>">
+    
+    <!-- Chart.js via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px;">
+                    <rect x="6" y="2" width="12" height="20" rx="3" ry="3"></rect>
+                    <circle cx="12" cy="6" r="1.5" fill="currentColor"></circle>
+                    <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
+                    <circle cx="12" cy="18" r="1.5" fill="currentColor"></circle>
+                </svg>
+            </div>
+            <div class="sidebar-brand-title">TRAFFIC<span>.AI</span></div>
+        </div>
+
+        <ul class="sidebar-menu">
+            <li class="menu-section-label">Operations</li>
+            <li class="menu-item {% if active_page == 'dashboard' %}active{% endif %}">
+                <a href="{{ url_for('dashboard') }}">
+                    <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Traffic Dashboard</span>
+                </a>
+            </li>
+            <li class="menu-item {% if active_page == 'detection' %}active{% endif %}">
+                <a href="{{ url_for('detection') }}">
+                    <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                    </svg>
+                    <span>AI Vehicle Detection</span>
+                </a>
+            </li>
+
+            <li class="menu-section-label">Analytics & Config</li>
+            <li class="menu-item {% if active_page == 'reports' %}active{% endif %}">
+                <a href="{{ url_for('reports') }}">
+                    <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>Traffic Reports</span>
+                </a>
+            </li>
+            <li class="menu-item {% if active_page == 'settings' %}active{% endif %}">
+                <a href="{{ url_for('settings') }}">
+                    <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <span>System Settings</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <div class="system-status-indicator">
+                <span class="status-dot"></span>
+                <span>Adaptive Engine: Online</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+        <!-- Top Navigation Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button type="button" class="mobile-toggle-btn" id="mobileSidebarToggle" aria-label="Toggle Menu">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="mode-badge">
+                    <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--primary-cyan);"></span>
+                    <span>MODE: ADAPTIVE REAL-TIME</span>
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <div class="time-display" id="liveClock">--:--:-- UTC</div>
+
+                <!-- User Profile Menu -->
+                <div class="profile-menu">
+                    <button type="button" class="profile-trigger-btn" id="profileBtn">
+                        <div class="user-avatar">
+                            {{ session.get('user_name', 'OP')[0:2]|upper }}
+                        </div>
+                        <div class="user-meta">
+                            <div class="user-name">{{ session.get('user_name', 'Operator') }}</div>
+                            <div class="user-role">{{ session.get('user_role', 'Officer') }}</div>
+                        </div>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--text-muted);">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+
+                    <!-- Dropdown Content -->
+                    <div class="profile-dropdown-content" id="profileDropdown">
+                        <div class="dropdown-user-header">
+                            <div style="font-weight:600; font-size:0.88rem; color:#fff;">{{ session.get('user_name') }}</div>
+                            <div class="dropdown-email">{{ session.get('user_email') }}</div>
+                        </div>
+                        <a href="{{ url_for('settings') }}" class="dropdown-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <span>Profile & Settings</span>
+                        </a>
+                        <a href="{{ url_for('logout') }}" class="dropdown-item logout">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            <span>Sign Out / Invalidate</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic Body Content -->
+        <main class="content-body">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div style="margin-bottom:1.25rem;">
+                        {% for category, message in messages %}
+                            <div style="padding:0.75rem 1.25rem; border-radius:8px; font-size:0.88rem; margin-bottom:0.5rem; background:{% if category=='error' %}rgba(239,68,68,0.15){% else %}rgba(16,185,129,0.15){% endif %}; border:1px solid {% if category=='error' %}rgba(239,68,68,0.3){% else %}rgba(16,185,129,0.3){% endif %}; color:{% if category=='error' %}#fca5a5{% else %}#6ee7b7{% endif %};">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

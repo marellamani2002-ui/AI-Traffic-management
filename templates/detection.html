@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block title %}AI Vehicle Detection - AI Smart Traffic Management{% endblock %}
+
+{% block extra_head %}
+<style>
+.upload-card {
+    background: var(--bg-card);
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.upload-card:hover, .upload-card.drag-over {
+    border-color: var(--primary-cyan);
+    background: rgba(0, 240, 255, 0.03);
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.1);
+}
+
+.upload-icon-circle {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: rgba(0, 240, 255, 0.1);
+    border: 1px solid var(--border-glow);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-cyan);
+    margin-bottom: 1rem;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+.file-input-hidden {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.result-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.annotated-preview-box {
+    background: #060b16;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    position: relative;
+    text-align: center;
+}
+
+.annotated-preview-box img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    object-fit: contain;
+    max-height: 520px;
+}
+
+.model-badge-tag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(10, 15, 29, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--primary-cyan);
+    color: var(--primary-cyan);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.tag-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    box-shadow: 0 0 8px var(--accent-green);
+}
+
+.legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    justify-content: center;
+    padding: 0.85rem;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-color);
+    font-size: 0.82rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.spinner-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 15, 29, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.spinner-overlay.active {
+    display: flex;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1 class="dash-title">AI Computer Vision Vehicle Detection</h1>
+        <p class="dash-subtitle">Upload Traffic Video (MP4/AVI) or High-Res Photos for YOLOv8 Vehicle Counting & Density Extraction</p>
+    </div>
+    <div class="dash-actions">
+        <!-- One-Click Sample Test -->
+        <form action="{{ url_for('detection') }}" method="POST" id="sampleForm">
+            <input type="hidden" name="use_sample" value="true">
+            <button type="submit" class="action-btn-secondary" style="background:rgba(0,240,255,0.1); border-color:var(--border-glow); color:var(--primary-cyan);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polygon points="10 8 16 12 10 16 10 8" fill="currentColor"></polygon>
+                </svg>
+                <span>Analyze Built-in Sample Traffic</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Mode Clarification Notice -->
+<div style="background:rgba(0, 240, 255, 0.05); border:1px solid rgba(0, 240, 255, 0.25); border-radius:12px; padding:0.85rem 1.25rem; margin-bottom:1.75rem; display:flex; align-items:center; gap:0.85rem; font-size:0.86rem; color:var(--text-secondary);">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px;color:var(--primary-cyan);flex-shrink:0;">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </svg>
+    <div>
+        <strong style="color:#ffffff;">Actual Video Inference Mode:</strong> 
+        Unlike the continuous dashboard simulation, this page executes genuine computer vision frame analysis. Vehicle bounding boxes are drawn frame-by-frame, and dynamic green timings are computed from physical vehicle detections.
+    </div>
+</div>
+
+<!-- Upload Drag and Drop Zone -->
+<form action="{{ url_for('detection') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+    <div class="upload-card" id="dropArea">
+        <input type="file" name="traffic_media" id="trafficMedia" class="file-input-hidden" accept="video/mp4,video/avi,video/quicktime,image/jpeg,image/png,image/jpg" onchange="document.getElementById('uploadForm').submit();">
+        <div class="upload-icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:32px;height:32px;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+        </div>
+        <h3 style="font-size:1.2rem; color:#fff; margin-bottom:0.4rem;">Select or Drag & Drop Traffic Video / Image</h3>
+        <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:1rem;">
+            Supported formats: <strong>.mp4, .avi, .mov, .jpg, .png</strong> (Max size: 50MB)
+        </p>
+        <button type="button" class="btn-primary" style="display:inline-flex; width:auto; padding:0.6rem 1.6rem; margin:0 auto; pointer-events:none;">
+            Browse Local File
+        </button>
+    </div>
+</form>
+
+<!-- Results Section (Visible after detection processing) -->
+{% if results %}
+<div class="result-container">
+    <!-- Results Header -->
+    <div class="panel-card" style="border-left: 4px solid var(--primary-cyan);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+            <div>
+                <span class="status-pill online" style="margin-bottom:0.4rem; display:inline-block;">ANALYSIS COMPLETE</span>
+                <h2 style="font-size:1.3rem; color:#fff;">Actual Video Inference Results</h2>
+                <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.2rem;">
+                    Processed via <strong>{{ results.model_used }}</strong> • Inference duration: <strong>{{ results.processing_time }}s</strong>
+                </p>
+            </div>
+            <div style="text-align:right;">
+                <span class="density-badge {{ results.density|lower }}" style="font-size:0.95rem; padding:6px 16px;">
+                    DENSITY: {{ results.density|upper }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metric Cards for Detected Vehicles -->
+    <div class="metric-grid" style="margin-bottom:0;">
+        <div class="metric-card total">
+            <div class="metric-info">
+                <span class="metric-label">Detected Vehicles</span>
+                <div class="metric-value">{{ results.total_vehicles }}</div>
+                <span class="metric-sub">Physical volume</span>
+            </div>
+            <div class="metric-icon-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px;">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+        </div>
+
+        <div class="metric-card cars">
+            <div class="metric-info">
+                <span class="metric-label">Cars</span>
+                <div class="metric-value" style="color:var(--primary-blue);">{{ results.cars }}</div>
+                <span class="metric-sub" style="color:var(--primary-blue);">COCO #2</span>
+            </div>
+        </div>
+
+        <div class="metric-card bikes">
+            <div class="metric-info">
+                <span class="metric-label">Bikes / Motorcycles</span>
+                <div class="metric-value" style="color:var(--accent-green);">{{ results.bikes }}</div>
+                <span class="metric-sub" style="color:var(--accent-green);">COCO #3</span>
+            </div>
+        </div>
+
+        <div class="metric-card buses">
+            <div class="metric-info">
+                <span class="metric-label">Buses</span>
+                <div class="metric-value" style="color:var(--accent-amber);">{{ results.buses }}</div>
+                <span class="metric-sub" style="color:var(--accent-amber);">COCO #5</span>
+            </div>
+        </div>
+
+        <div class="metric-card trucks">
+            <div class="metric-info">
+                <span class="metric-label">Trucks</span>
+                <div class="metric-value" style="color:var(--primary-purple);">{{ results.trucks }}</div>
+                <span class="metric-sub" style="color:var(--primary-purple);">COCO #7</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Annotated Computer Vision Frame View -->
+    <div class="annotated-preview-box">
+        <div class="model-badge-tag">
+            <span class="tag-dot"></span>
+            <span>{{ results.model_used }} • ACTUAL INFERENCE</span>
+        </div>
+        <img src="{{ url_for('static', filename=results.annotated_image) }}" alt="Annotated Traffic Vehicles">
+        
+        <!-- Bounding Box Color Legend -->
+        <div class="legend-row">
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgb(37, 130, 246);"></div>
+                <span>Cars (Blue)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgb(16, 231, 110);"></div>
+                <span>Motorcycles / Bikes (Green)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgb(245, 158, 11);"></div>
+                <span>Buses (Amber)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgb(180, 50, 214);"></div>
+                <span>Heavy Trucks (Purple)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Signal Recommendation Output -->
+    <div class="control-grid" style="margin-top:0.5rem;">
+        <div class="panel-card" style="background:linear-gradient(135deg, rgba(0,240,255,0.06) 0%, rgba(37,99,235,0.06) 100%);">
+            <div class="panel-title-row">
+                <h3 class="panel-title" style="color:var(--primary-cyan);">Calculated Green-Light Timing Recommendation</h3>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:0.5rem;">
+                <div>
+                    <div style="font-size:2.2rem; font-weight:800; color:#fff; font-family:monospace;">
+                        {{ results.recommended_green }} SECONDS
+                    </div>
+                    <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem;">
+                        Optimized to clear the current queue of {{ results.total_vehicles }} waiting vehicles safely.
+                    </p>
+                </div>
+                <div class="density-badge {{ results.density|lower }}" style="font-size:1.1rem; padding:8px 18px;">
+                    {{ results.density }} Density
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-card">
+            <div class="panel-title-row">
+                <h3 class="panel-title">Safety & Academic Disclaimer</h3>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6;">
+                This vehicle detection and timing recommendation represents intelligent software analytics. It calculates dynamic clearance times based on actual video inference without physical relay actuation over city infrastructure.
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Fullscreen Spinner Loading Overlay -->
+<div class="spinner-overlay" id="loadingOverlay">
+    <div style="width:60px; height:60px; border:4px solid rgba(0,240,255,0.2); border-top-color:var(--primary-cyan); border-radius:50%; animation:spin 1s linear infinite;"></div>
+    <h3 style="color:#ffffff; font-size:1.2rem; margin-top:0.5rem;">Running Computer Vision & YOLO Inference...</h3>
+    <p style="color:var(--text-secondary); font-size:0.88rem;">Extracting keyframes, classifying vehicles, and calculating adaptive green phase.</p>
+</div>
+
+<style>
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const uploadForm = document.getElementById('uploadForm');
+    const sampleForm = document.getElementById('sampleForm');
+    const overlay = document.getElementById('loadingOverlay');
+
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', () => {
+            if (overlay) overlay.classList.add('active');
+        });
+    }
+
+    if (sampleForm) {
+        sampleForm.addEventListener('submit', () => {
+            if (overlay) overlay.classList.add('active');
+        });
+    }
+});
+</script>
+{% endblock %}

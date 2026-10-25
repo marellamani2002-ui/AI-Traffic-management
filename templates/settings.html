@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings - AI Smart Traffic Management{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1 class="dash-title">Operator Profile & System Settings</h1>
+        <p class="dash-subtitle">Manage Account Credentials, Signal Thresholds, and System Parameters</p>
+    </div>
+</div>
+
+<div class="control-grid">
+    <!-- Operator Profile Card -->
+    <div class="panel-card">
+        <div class="panel-title-row">
+            <h2 class="panel-title">Operator Profile</h2>
+            <span class="status-pill online">Session Active</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:1.25rem; margin-bottom:1.5rem;">
+            <div style="width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg, var(--primary-cyan) 0%, var(--primary-blue) 100%); display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:700; color:#fff; box-shadow:0 0 15px rgba(0,240,255,0.4);">
+                {{ session.get('user_name', 'OP')[0:2]|upper }}
+            </div>
+            <div>
+                <h3 style="color:#ffffff; font-size:1.2rem; margin-bottom:0.25rem;">{{ session.get('user_name') }}</h3>
+                <p style="color:var(--primary-cyan); font-size:0.85rem; font-weight:600;">{{ session.get('user_role', 'Traffic Officer') }}</p>
+                <p style="color:var(--text-muted); font-size:0.8rem; margin-top:0.2rem;">{{ session.get('user_email') }}</p>
+            </div>
+        </div>
+
+        <div class="detail-row">
+            <span class="detail-label">Account Privilege</span>
+            <span class="detail-value" style="color:var(--accent-green);">Authorized Operator</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Session Lifetime</span>
+            <span class="detail-value">7 Days (Encrypted)</span>
+        </div>
+        <div class="detail-row" style="border:none;">
+            <span class="detail-label">Database Origin</span>
+            <span class="detail-value">Local SQLite (traffic.db)</span>
+        </div>
+        
+        <a href="{{ url_for('logout') }}" class="dropdown-item logout" style="display:inline-flex; margin-top:1rem; padding:0.6rem 1.25rem; border:1px solid rgba(239,68,68,0.3); border-radius:8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Log Out of Session</span>
+        </a>
+    </div>
+
+    <!-- Algorithm Signal Parameters -->
+    <div class="panel-card">
+        <div class="panel-title-row">
+            <h2 class="panel-title">Adaptive Timing Thresholds</h2>
+            <span style="font-size:0.75rem; color:var(--text-secondary);">Config Parameters</span>
+        </div>
+        <form onsubmit="event.preventDefault(); alert('Algorithm parameters updated locally.');">
+            <div style="display:flex; flex-direction:column; gap:1rem;">
+                <div class="detail-row">
+                    <div>
+                        <div style="font-size:0.88rem; font-weight:600; color:#fff;">Minimum Green Light Duration</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Shortest cycle time for low traffic</div>
+                    </div>
+                    <input type="number" value="15" style="width:70px; padding:6px 10px; background:#16223d; border:1px solid var(--border-color); color:#fff; border-radius:6px; text-align:center;">
+                </div>
+
+                <div class="detail-row">
+                    <div>
+                        <div style="font-size:0.88rem; font-weight:600; color:#fff;">Maximum Green Light Cap</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Prevent starvation of cross corridors</div>
+                    </div>
+                    <input type="number" value="75" style="width:70px; padding:6px 10px; background:#16223d; border:1px solid var(--border-color); color:#fff; border-radius:6px; text-align:center;">
+                </div>
+
+                <div class="detail-row">
+                    <div>
+                        <div style="font-size:0.88rem; font-weight:600; color:#fff;">High Congestion Trigger</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">Vehicle count that raises alert</div>
+                    </div>
+                    <input type="number" value="35" style="width:70px; padding:6px 10px; background:#16223d; border:1px solid var(--border-color); color:#fff; border-radius:6px; text-align:center;">
+                </div>
+
+                <button type="submit" class="action-btn-secondary" style="margin-top:0.5rem; justify-content:center; background:rgba(0,240,255,0.1); border-color:var(--border-glow); color:var(--primary-cyan);">
+                    Save Algorithm Parameters
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Academic & Hardware Disclaimer Card -->
+<div class="panel-card" style="margin-top:1.5rem; border:1px dashed rgba(0,240,255,0.3); background:rgba(0,240,255,0.03);">
+    <div class="panel-title-row">
+        <h2 class="panel-title" style="color:var(--primary-cyan);">Academic Research & Hardware Disclaimer</h2>
+    </div>
+    <p style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6;">
+        This software system operates as an **Intelligent Decision-Support & Traffic Simulation Platform**. The dynamic green-light calculations are derived from real-time computer vision inference (YOLOv8) and simulated telemetry. It does not exert direct physical actuator control over municipal hardware intersections without approved IoT hardware relay bridges and municipal regulatory approval.
+    </p>
+</div>
+{% endblock %}
