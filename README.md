@@ -85,6 +85,15 @@ python app.py
 ```
 Open your browser and navigate to: `http://127.0.0.1:5000/`
 
+### 4. Deploying to Render
+1. Push this project to a GitHub repository and create a **Web Service** on Render connected to that repository.
+2. Set the **Build Command** to `pip install -r requirements.txt`.
+3. Set the **Start Command** to `gunicorn app:app`.
+4. In the Render service's environment settings, add `SECRET_KEY` with a long, unique random value. Do not use the development fallback secret for a public deployment.
+5. Deploy the service. Gunicorn reads `gunicorn.conf.py`, which listens on `0.0.0.0` and uses Render's `PORT` environment variable (with `10000` as a local fallback).
+
+The existing SQLite database and uploaded files are stored on the service's filesystem. On hosting plans where that filesystem is temporary, database changes and uploads may not survive a redeploy or restart; configure persistent storage or a hosted database if that data must be retained. The AI model file (`yolov8n.pt`) must also be present in the deployed repository or available to the app at runtime.
+
 ---
 
 ## 🔒 Security & Best Practices

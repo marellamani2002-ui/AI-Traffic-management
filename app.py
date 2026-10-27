@@ -278,5 +278,6 @@ def api_traffic_data():
 
 if __name__ == '__main__':
     print("[*] Traffic.AI Development Server Starting...")
-    print("[*] Open your browser at: http://127.0.0.1:5000/")
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', '5000'))
+    print(f"[*] Open your browser at: http://127.0.0.1:{port}/")
+    app.run(debug=True, port=port)
